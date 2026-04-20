@@ -8,7 +8,7 @@ const LoginPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { login } = useAuth();
-  const [form, setForm] = useState({ usuario: "", contraseña: "" });
+  const [form, setForm] = useState({ usuario: "", password: "" });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -106,11 +106,11 @@ const LoginPage = () => {
                 <LockKeyhole className="mr-3 h-5 w-5 text-brand-yellow" />
                 <input
                   type="password"
-                  value={form.contraseña}
+                  value={form.password}
                   onChange={(event) =>
-                    setForm((current) => ({ ...current, contraseña: event.target.value }))
+                    setForm((current) => ({ ...current, password: event.target.value }))
                   }
-                  placeholder="••••••••"
+                  placeholder="********"
                   className="w-full bg-transparent text-white outline-none placeholder:text-zinc-500"
                   required
                 />

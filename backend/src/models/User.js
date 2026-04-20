@@ -10,9 +10,18 @@ const userSchema = new mongoose.Schema(
       minlength: 3,
       maxlength: 40,
     },
+    password: {
+      type: String,
+      required: false,
+    },
+    // Legacy fields kept so old records can still log in after the migration.
     contraseña: {
       type: String,
-      required: true,
+      required: false,
+    },
+    contraseÃ±a: {
+      type: String,
+      required: false,
     },
     rol: {
       type: String,

@@ -15,7 +15,9 @@ export const ensureAdminUser = async () => {
   const existingUser = await User.findOne({ usuario });
 
   if (existingUser) {
-    existingUser["contraseña"] = hashedPassword;
+    existingUser.password = hashedPassword;
+    existingUser.contraseña = undefined;
+    existingUser["contraseÃ±a"] = undefined;
     existingUser.rol = rol;
     await existingUser.save();
     console.log(`Admin user ${usuario} updated`);
@@ -24,7 +26,7 @@ export const ensureAdminUser = async () => {
 
   await User.create({
     usuario,
-    ["contraseña"]: hashedPassword,
+    password: hashedPassword,
     rol,
   });
 
