@@ -2,6 +2,7 @@ import { Router } from "express";
 import {
   createTour,
   deleteTour,
+  getAvailability,
   getTours,
   markAsPaid,
   updateTour,
@@ -12,6 +13,7 @@ const router = Router();
 
 router.use(protect);
 router.get("/", getTours);
+router.get("/availability", getAvailability);
 router.post("/", createTour);
 router.put("/:id", updateTour);
 router.patch("/:id/pay", markAsPaid);

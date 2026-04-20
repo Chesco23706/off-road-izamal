@@ -20,7 +20,7 @@ const ToursTable = ({
       <div>
         <p className="font-display text-4xl uppercase tracking-wide text-white">Agenda de Tours</p>
         <p className="text-sm text-zinc-400">
-          Tabla de control con pagos, horarios y estado de cada reservacion.
+          Tabla de control con pagos, horarios y bloqueo de ATVs por ventanas de 3 horas.
         </p>
       </div>
       <div className="flex flex-wrap gap-3">
@@ -50,7 +50,9 @@ const ToursTable = ({
             <th className="px-4 py-4">Cliente</th>
             <th className="px-4 py-4">Fecha</th>
             <th className="px-4 py-4">Hora</th>
+            <th className="px-4 py-4">ATVs</th>
             <th className="px-4 py-4">Tour</th>
+            <th className="px-4 py-4">Extra</th>
             <th className="px-4 py-4">Abono</th>
             <th className="px-4 py-4">Total</th>
             <th className="px-4 py-4">Resto</th>
@@ -61,7 +63,7 @@ const ToursTable = ({
         <tbody>
           {tours.length === 0 ? (
             <tr>
-              <td colSpan="9" className="px-4 py-10 text-center text-zinc-400">
+              <td colSpan="11" className="px-4 py-10 text-center text-zinc-400">
                 No hay reservaciones para los filtros seleccionados.
               </td>
             </tr>
@@ -83,12 +85,14 @@ const ToursTable = ({
                 </td>
                 <td className="px-4 py-4">{tour.fecha}</td>
                 <td className="px-4 py-4">{tour.hora}</td>
+                <td className="px-4 py-4 font-semibold text-brand-yellow">{tour.cantidadAtvs}</td>
                 <td className="px-4 py-4">
                   <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-semibold uppercase tracking-[0.25em] text-zinc-300">
                     <Map className="h-3.5 w-3.5 text-brand-yellow" />
                     {prettyTourType(tour.tipoTour)}
                   </span>
                 </td>
+                <td className="px-4 py-4 text-zinc-300">{tour.extra || "-"}</td>
                 <td className="px-4 py-4">{currency(tour.abono)}</td>
                 <td className="px-4 py-4">{currency(tour.total)}</td>
                 <td className="px-4 py-4">{currency(tour.restante)}</td>

@@ -16,10 +16,21 @@ const tourSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    cantidadAtvs: {
+      type: Number,
+      required: true,
+      min: 1,
+    },
     tipoTour: {
       type: String,
-      enum: ["individual", "doble", "grupal"],
+      enum: ["city_tours", "tour_ebula", "tour_fogata", "extra"],
       required: true,
+    },
+    extra: {
+      type: String,
+      trim: true,
+      maxlength: 120,
+      default: "",
     },
     abono: {
       type: Number,
@@ -53,7 +64,7 @@ const tourSchema = new mongoose.Schema(
   }
 );
 
-tourSchema.index({ fecha: 1, hora: 1 }, { unique: true });
+tourSchema.index({ fecha: 1, hora: 1 });
 
 const Tour = mongoose.model("Tour", tourSchema);
 

@@ -1,18 +1,23 @@
 import { useEffect, useMemo, useState } from "react";
 import { X } from "lucide-react";
+import api from "../api/client.js";
 import { currency } from "../utils/formatters.js";
 
 const initialForm = {
   nombreCliente: "",
   fecha: "",
   hora: "",
-  tipoTour: "individual",
+  cantidadAtvs: 1,
+  tipoTour: "city_tours",
+  extra: "",
   abono: "",
   total: ""
 };
 
 const TourFormModal = ({ open, onClose, onSubmit, loading, initialValues }) => {
   const [form, setForm] = useState(initialForm);
+  const [availability, setAvailability] = useState(null);
+  const [availabilityError, setAvailabilityError] = useState("");
 
   useEffect(() => {
     if (initialValues) {
@@ -20,7 +25,9 @@ const TourFormModal = ({ open, onClose, onSubmit, loading, initialValues }) => {
         nombreCliente: initialValues.nombreCliente,
         fecha: initialValues.fecha,
         hora: initialValues.hora,
+        cantidadAtvs: initialValues.cantidadAtvs,
         tipoTour: initialValues.tipoTour,
+        extra: initialValues.extra || "",
         abono: initialValues.abono,
         total: initialValues.total
       });
@@ -29,6 +36,35 @@ const TourFormModal = ({ open, onClose, onSubmit, loading, initialValues }) => {
 
     setForm(initialForm);
   }, [initialValues, open]);
+
+  useEffect(() => {
+    if (!open || !form.fecha || !form.hora) {
+      setAvailability(null);
+      setAvailabilityError("");
+      return;
+    }
+
+    const timeout = window.setTimeout(async () => {
+      try {
+        setAvailabilityError("");
+        const { data } = await api.get("/tours/availability", {
+          params: {
+            fecha: form.fecha,
+            hora: form.hora,
+            excludeTourId: initialValues?._id,
+          },
+        });
+        setAvailability(data);
+      } catch (requestError) {
+        setAvailability(null);
+        setAvailabilityError(
+          requestError.response?.data?.message || "No se pudo consultar disponibilidad"
+        );
+      }
+    }, 300);
+
+    return () => window.clearTimeout(timeout);
+  }, [form.fecha, form.hora, initialValues?._id, open]);
 
   const restante = useMemo(() => {
     const total = Number(form.total || 0);
@@ -49,10 +85,14 @@ const TourFormModal = ({ open, onClose, onSubmit, loading, initialValues }) => {
     event.preventDefault();
     onSubmit({
       ...form,
+      cantidadAtvs: Number(form.cantidadAtvs),
       abono: Number(form.abono),
       total: Number(form.total)
     });
   };
+
+  const requestedAtvs = Number(form.cantidadAtvs || 0);
+  const exceedsAvailability = availability && requestedAtvs > availability.availableAtvs;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4 backdrop-blur-sm">
@@ -63,7 +103,7 @@ const TourFormModal = ({ open, onClose, onSubmit, loading, initialValues }) => {
               {initialValues ? "Editar Reservacion" : "Nueva Reservacion"}
             </p>
             <p className="text-sm text-zinc-400">
-              Los horarios se bloquean automaticamente para evitar duplicados.
+              Cada salida bloquea las cuatrimotos por 3 horas. Capacidad maxima: 12 ATVs.
             </p>
           </div>
           <button
@@ -97,15 +137,48 @@ const TourFormModal = ({ open, onClose, onSubmit, loading, initialValues }) => {
             className="h-12 rounded-2xl border border-white/10 bg-white/5 px-4 text-white outline-none transition focus:border-brand-yellow/50 focus:shadow-glow"
             required
           />
+          <input
+            type="number"
+            min="1"
+            max="12"
+            step="1"
+            placeholder="Cantidad de ATVs"
+            value={form.cantidadAtvs}
+            onChange={(event) => handleChange("cantidadAtvs", event.target.value)}
+            className="h-12 rounded-2xl border border-white/10 bg-white/5 px-4 text-white outline-none transition focus:border-brand-yellow/50 focus:shadow-glow"
+            required
+          />
+          {(availability || availabilityError) && (
+            <div
+              className={`rounded-2xl border px-4 py-3 text-sm md:col-span-2 ${
+                exceedsAvailability || availabilityError
+                  ? "border-red-500/20 bg-red-500/10 text-red-300"
+                  : "border-green-500/20 bg-green-500/10 text-green-300"
+              }`}
+            >
+              {availabilityError ||
+                `Disponibles para esa ventana de ${availability.blockHours} horas: ${availability.availableAtvs} de ${availability.capacity} ATVs.`}
+              {exceedsAvailability &&
+                ` La reservacion pide ${requestedAtvs}, supera la disponibilidad.`}
+            </div>
+          )}
           <select
             value={form.tipoTour}
             onChange={(event) => handleChange("tipoTour", event.target.value)}
             className="h-12 rounded-2xl border border-white/10 bg-zinc-900 px-4 text-white outline-none transition focus:border-brand-yellow/50 focus:shadow-glow"
           >
-            <option value="individual">Individual</option>
-            <option value="doble">Doble</option>
-            <option value="grupal">Grupal</option>
+            <option value="city_tours">City Tours</option>
+            <option value="tour_ebula">Tour de Ebula</option>
+            <option value="tour_fogata">Tour con fogata</option>
+            <option value="extra">Extra</option>
           </select>
+          <input
+            placeholder="Extra opcional o detalle adicional"
+            value={form.extra}
+            onChange={(event) => handleChange("extra", event.target.value)}
+            className="h-12 rounded-2xl border border-white/10 bg-white/5 px-4 text-white outline-none transition focus:border-brand-yellow/50 focus:shadow-glow md:col-span-2"
+            required={form.tipoTour === "extra"}
+          />
           <input
             type="number"
             min="0"
@@ -126,14 +199,14 @@ const TourFormModal = ({ open, onClose, onSubmit, loading, initialValues }) => {
             className="h-12 rounded-2xl border border-white/10 bg-white/5 px-4 text-white outline-none transition focus:border-brand-yellow/50 focus:shadow-glow"
             required
           />
-          <div className="rounded-2xl border border-brand-yellow/20 bg-brand-yellow/10 px-4 py-3 text-white">
+          <div className="rounded-2xl border border-brand-yellow/20 bg-brand-yellow/10 px-4 py-3 text-white md:col-span-2">
             <p className="text-xs uppercase tracking-[0.3em] text-zinc-400">Resto por pagar</p>
             <p className="font-display text-4xl uppercase text-brand-yellow">{currency(restante)}</p>
           </div>
           <button
             type="submit"
-            disabled={loading}
-            className="h-12 rounded-2xl bg-brand-yellow font-semibold uppercase tracking-widest text-black transition hover:-translate-y-0.5 hover:bg-yellow-300 hover:shadow-glow disabled:opacity-60"
+            disabled={loading || exceedsAvailability}
+            className="h-12 rounded-2xl bg-brand-yellow font-semibold uppercase tracking-widest text-black transition hover:-translate-y-0.5 hover:bg-yellow-300 hover:shadow-glow disabled:opacity-60 md:col-span-2"
           >
             {loading ? "Guardando..." : initialValues ? "Actualizar" : "Crear Reservacion"}
           </button>

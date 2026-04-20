@@ -1,5 +1,12 @@
 import Tour from "../models/Tour.js";
-import { buildTourFinance, validateTourPayload } from "../utils/tourUtils.js";
+import {
+  ATV_CAPACITY,
+  TOUR_BLOCK_HOURS,
+  buildTourFinance,
+  hasTimeOverlap,
+  timeToMinutes,
+  validateTourPayload
+} from "../utils/tourUtils.js";
 
 const buildFilters = ({ search, fecha, status, sortBy = "fecha", order = "asc" }) => {
   const query = {};
@@ -16,7 +23,15 @@ const buildFilters = ({ search, fecha, status, sortBy = "fecha", order = "asc" }
     query.status = status;
   }
 
-  const allowedSorts = ["fecha", "hora", "nombreCliente", "tipoTour", "status", "createdAt"];
+  const allowedSorts = [
+    "fecha",
+    "hora",
+    "nombreCliente",
+    "cantidadAtvs",
+    "tipoTour",
+    "status",
+    "createdAt"
+  ];
   const field = allowedSorts.includes(sortBy) ? sortBy : "fecha";
   const direction = order === "desc" ? -1 : 1;
 
@@ -34,6 +49,46 @@ export const getTours = async (req, res, next) => {
   }
 };
 
+const getAtvUsageForWindow = async ({ fecha, hora, excludeTourId }) => {
+  const requestedStart = timeToMinutes(hora);
+  const requestedEnd = requestedStart + TOUR_BLOCK_HOURS * 60;
+  const query = { fecha };
+
+  if (excludeTourId) {
+    query._id = { $ne: excludeTourId };
+  }
+
+  const tours = await Tour.find(query).lean();
+
+  return tours.reduce((total, tour) => {
+    const tourStart = timeToMinutes(tour.hora);
+    const tourEnd = tourStart + TOUR_BLOCK_HOURS * 60;
+
+    if (!hasTimeOverlap(requestedStart, requestedEnd, tourStart, tourEnd)) {
+      return total;
+    }
+
+    return total + Number(tour.cantidadAtvs || 0);
+  }, 0);
+};
+
+const assertAtvAvailability = async ({ fecha, hora, cantidadAtvs, excludeTourId }) => {
+  const usedAtvs = await getAtvUsageForWindow({ fecha, hora, excludeTourId });
+  const requestedAtvs = Number(cantidadAtvs);
+  const availableAtvs = ATV_CAPACITY - usedAtvs;
+
+  if (requestedAtvs > availableAtvs) {
+    const error = new Error(
+      `No hay suficientes ATVs disponibles. Para esa ventana de ${TOUR_BLOCK_HOURS} horas quedan ${Math.max(
+        availableAtvs,
+        0
+      )} de ${ATV_CAPACITY}.`
+    );
+    error.statusCode = 409;
+    throw error;
+  }
+};
+
 export const createTour = async (req, res, next) => {
   try {
     const validationError = validateTourPayload(req.body);
@@ -46,11 +101,19 @@ export const createTour = async (req, res, next) => {
 
     const finance = buildTourFinance(req.body);
 
+    await assertAtvAvailability({
+      fecha: req.body.fecha,
+      hora: req.body.hora,
+      cantidadAtvs: req.body.cantidadAtvs,
+    });
+
     const tour = await Tour.create({
       nombreCliente: req.body.nombreCliente.trim(),
       fecha: req.body.fecha,
       hora: req.body.hora,
+      cantidadAtvs: Number(req.body.cantidadAtvs),
       tipoTour: req.body.tipoTour,
+      extra: req.body.extra?.trim() || "",
       ...finance,
       createdBy: req.user._id,
     });
@@ -78,13 +141,22 @@ export const updateTour = async (req, res, next) => {
 
     const finance = buildTourFinance(req.body);
 
+    await assertAtvAvailability({
+      fecha: req.body.fecha,
+      hora: req.body.hora,
+      cantidadAtvs: req.body.cantidadAtvs,
+      excludeTourId: req.params.id,
+    });
+
     const tour = await Tour.findByIdAndUpdate(
       req.params.id,
       {
         nombreCliente: req.body.nombreCliente.trim(),
         fecha: req.body.fecha,
         hora: req.body.hora,
+        cantidadAtvs: Number(req.body.cantidadAtvs),
         tipoTour: req.body.tipoTour,
+        extra: req.body.extra?.trim() || "",
         ...finance,
       },
       {
@@ -106,6 +178,33 @@ export const updateTour = async (req, res, next) => {
       error.statusCode = 409;
     }
 
+    next(error);
+  }
+};
+
+export const getAvailability = async (req, res, next) => {
+  try {
+    const { fecha, hora, excludeTourId } = req.query;
+
+    if (!fecha || !hora) {
+      const error = new Error("Fecha y hora son obligatorias para consultar disponibilidad");
+      error.statusCode = 400;
+      throw error;
+    }
+
+    const usedAtvs = await getAtvUsageForWindow({ fecha, hora, excludeTourId });
+    const availableAtvs = Math.max(ATV_CAPACITY - usedAtvs, 0);
+
+    res.json({
+      fecha,
+      hora,
+      blockHours: TOUR_BLOCK_HOURS,
+      capacity: ATV_CAPACITY,
+      usedAtvs,
+      availableAtvs,
+      blocked: availableAtvs === 0,
+    });
+  } catch (error) {
     next(error);
   }
 };
