@@ -24,7 +24,13 @@ const LoginPage = () => {
       await login(form);
       navigate(redirectTo, { replace: true });
     } catch (requestError) {
-      setError(requestError.response?.data?.message || "No se pudo iniciar sesion");
+      if (requestError.response?.data?.message) {
+        setError(requestError.response.data.message);
+      } else if (requestError.request) {
+        setError("No se pudo conectar con la API. Revisa VITE_API_URL en Vercel y CLIENT_URL en Render.");
+      } else {
+        setError("No se pudo iniciar sesion");
+      }
     } finally {
       setLoading(false);
     }
