@@ -5,6 +5,8 @@ import User from "../models/User.js";
 
 dotenv.config();
 
+const legacyMojibakePasswordKey = "contrase" + String.fromCharCode(195, 177) + "a";
+
 const createAdmin = async () => {
   await connectDatabase();
 
@@ -18,7 +20,7 @@ const createAdmin = async () => {
   if (existingUser) {
     existingUser.password = hashedPassword;
     existingUser.contraseña = undefined;
-    existingUser["contraseÃ±a"] = undefined;
+    existingUser[legacyMojibakePasswordKey] = undefined;
     existingUser.rol = rol;
     await existingUser.save();
     console.log(`Usuario ${usuario} actualizado correctamente`);

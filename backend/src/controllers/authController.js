@@ -2,9 +2,11 @@ import bcrypt from "bcryptjs";
 import User from "../models/User.js";
 import generateToken from "../utils/token.js";
 
-const getRequestPassword = (body) => body.password || body.contraseña || body["contraseÃ±a"];
+const legacyMojibakePasswordKey = "contrase" + String.fromCharCode(195, 177) + "a";
 
-const getStoredPassword = (user) => user.password || user.contraseña || user["contraseÃ±a"];
+const getRequestPassword = (body) => body.password || body.contraseña || body[legacyMojibakePasswordKey];
+
+const getStoredPassword = (user) => user.password || user.contraseña || user[legacyMojibakePasswordKey];
 
 export const login = async (req, res, next) => {
   try {

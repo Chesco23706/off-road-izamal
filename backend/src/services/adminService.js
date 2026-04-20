@@ -1,6 +1,8 @@
 import bcrypt from "bcryptjs";
 import User from "../models/User.js";
 
+const legacyMojibakePasswordKey = "contrase" + String.fromCharCode(195, 177) + "a";
+
 export const ensureAdminUser = async () => {
   const usuario = process.env.ADMIN_USER;
   const password = process.env.ADMIN_PASSWORD;
@@ -17,7 +19,7 @@ export const ensureAdminUser = async () => {
   if (existingUser) {
     existingUser.password = hashedPassword;
     existingUser.contraseña = undefined;
-    existingUser["contraseÃ±a"] = undefined;
+    existingUser[legacyMojibakePasswordKey] = undefined;
     existingUser.rol = rol;
     await existingUser.save();
     console.log(`Admin user ${usuario} updated`);

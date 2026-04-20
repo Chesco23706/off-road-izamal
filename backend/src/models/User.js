@@ -19,10 +19,6 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: false,
     },
-    contraseÃ±a: {
-      type: String,
-      required: false,
-    },
     rol: {
       type: String,
       enum: ["admin", "empleado"],
