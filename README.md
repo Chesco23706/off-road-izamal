@@ -47,7 +47,7 @@ off road/
 - Bloqueo de horarios duplicados
 - Cantidad de ATVs por reservacion
 - Tipos de tour: City Tours, Tour de Ebula, Tour con fogata y Extra
-- Limite de 12 ATVs disponibles por ventanas de 3 horas
+- Limite de 10 ATVs disponibles por ventanas de 3 horas
 - Filtros por fecha, status y busqueda por nombre
 - Dashboard con ingresos, tours del dia, pagados y pendientes
 - Exportacion a Excel y PDF

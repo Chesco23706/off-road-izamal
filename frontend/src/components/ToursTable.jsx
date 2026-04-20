@@ -55,7 +55,7 @@ const ToursTable = ({
             <th className="px-4 py-4">Extra</th>
             <th className="px-4 py-4">Abono</th>
             <th className="px-4 py-4">Total</th>
-            <th className="px-4 py-4">Resto</th>
+            <th className="px-4 py-4">Saldo</th>
             <th className="px-4 py-4">Status</th>
             <th className="px-4 py-4">Acciones</th>
           </tr>

@@ -1,6 +1,6 @@
 export const normalizeMoney = (value) => Number(Number(value || 0).toFixed(2));
 
-export const ATV_CAPACITY = 12;
+export const ATV_CAPACITY = 10;
 export const TOUR_BLOCK_HOURS = 3;
 
 export const timeToMinutes = (time) => {
