@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { LockKeyhole, Mountain, UserCircle2 } from "lucide-react";
+import { Eye, EyeOff, LockKeyhole, Mountain, UserCircle2 } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
 
@@ -11,6 +11,7 @@ const LoginPage = () => {
   const [form, setForm] = useState({ usuario: "", password: "" });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const redirectTo = location.state?.from?.pathname || "/";
 
@@ -105,7 +106,7 @@ const LoginPage = () => {
               <div className="flex h-14 items-center rounded-2xl border border-white/10 bg-white/5 px-4 transition focus-within:border-brand-yellow/50 focus-within:shadow-glow">
                 <LockKeyhole className="mr-3 h-5 w-5 text-brand-yellow" />
                 <input
-                  type="password"
+                  type={showPassword ? "text" : "password"}
                   value={form.password}
                   onChange={(event) =>
                     setForm((current) => ({ ...current, password: event.target.value }))
@@ -114,6 +115,14 @@ const LoginPage = () => {
                   className="w-full bg-transparent text-white outline-none placeholder:text-zinc-500"
                   required
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((current) => !current)}
+                  className="ml-3 rounded-xl p-2 text-zinc-400 transition hover:bg-white/5 hover:text-brand-yellow"
+                  aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
+                >
+                  {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                </button>
               </div>
             </label>
 
