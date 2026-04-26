@@ -53,8 +53,9 @@ const FiltersBar = ({ filters, onChange, onClear }) => (
           <option value="fecha">Fecha</option>
           <option value="hora">Hora</option>
           <option value="nombreCliente">Cliente</option>
+          <option value="cantidadAtvs">ATVs</option>
           <option value="tipoTour">Tipo</option>
-          <option value="status">Status</option>
+          <option value="status">Estado</option>
         </select>
       </div>
       <button

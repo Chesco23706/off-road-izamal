@@ -7,10 +7,10 @@ export const currency = (value) =>
 
 export const prettyTourType = (type) => {
   const labels = {
-    city_tours: "City Tours",
+    city_tours: "Tour por la ciudad",
     tour_ebula: "Tour Ebula/Sacala",
     tour_fogata: "Tour con fogata",
-    extra: "Extra"
+    extra: "Personalizado"
   };
 
   return labels[type] || type;

@@ -167,10 +167,10 @@ const TourFormModal = ({ open, onClose, onSubmit, loading, initialValues }) => {
             onChange={(event) => handleChange("tipoTour", event.target.value)}
             className="h-12 rounded-2xl border border-white/10 bg-zinc-900 px-4 text-white outline-none transition focus:border-brand-yellow/50 focus:shadow-glow"
           >
-            <option value="city_tours">City Tours</option>
+            <option value="city_tours">Tour por la ciudad</option>
             <option value="tour_ebula">Tour Ebula/Sacala</option>
             <option value="tour_fogata">Tour con fogata</option>
-            <option value="extra">Extra</option>
+            <option value="extra">Personalizado</option>
           </select>
           <input
             placeholder="Extra opcional o detalle adicional"

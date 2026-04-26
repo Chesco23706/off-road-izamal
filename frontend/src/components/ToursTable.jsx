@@ -56,7 +56,7 @@ const ToursTable = ({
             <th className="px-4 py-4">Abono</th>
             <th className="px-4 py-4">Total</th>
             <th className="px-4 py-4">Saldo</th>
-            <th className="px-4 py-4">Status</th>
+            <th className="px-4 py-4">Estado</th>
             <th className="px-4 py-4">Acciones</th>
           </tr>
         </thead>
@@ -77,9 +77,7 @@ const ToursTable = ({
                     </div>
                     <div>
                       <p className="font-semibold text-white">{tour.nombreCliente}</p>
-                      <p className="text-xs uppercase tracking-[0.25em] text-zinc-500">
-                        OFF-ROAD BOOKING
-                      </p>
+                      <p className="text-xs uppercase tracking-[0.25em] text-zinc-500">Reservación</p>
                     </div>
                   </div>
                 </td>

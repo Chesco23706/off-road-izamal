@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Eye, EyeOff, LockKeyhole, Mountain, UserCircle2 } from "lucide-react";
+import { Eye, EyeOff, LockKeyhole, UserCircle2 } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
 
@@ -27,9 +27,9 @@ const LoginPage = () => {
       if (requestError.response?.data?.message) {
         setError(requestError.response.data.message);
       } else if (requestError.request) {
-        setError("No se pudo conectar con la API. Revisa VITE_API_URL en Vercel y CLIENT_URL en Render.");
+        setError("No se pudo conectar con la API. Revisa la configuración del sistema.");
       } else {
-        setError("No se pudo iniciar sesion");
+        setError("No se pudo iniciar sesión");
       }
     } finally {
       setLoading(false);
@@ -45,47 +45,33 @@ const LoginPage = () => {
       <motion.div
         initial={{ opacity: 0, y: 24 }}
         animate={{ opacity: 1, y: 0 }}
-        className="relative z-10 grid w-full max-w-5xl overflow-hidden rounded-[32px] border border-brand-yellow/20 bg-zinc-950/85 shadow-panel lg:grid-cols-[1.1fr_0.9fr]"
+        className="relative z-10 grid w-full max-w-5xl overflow-hidden rounded-[32px] border border-brand-yellow/20 bg-zinc-950/85 shadow-panel lg:grid-cols-[1fr_0.95fr]"
       >
-        <div className="flex flex-col justify-between border-b border-white/10 p-8 lg:border-b-0 lg:border-r">
-          <div>
-            <div className="mb-6 flex items-center gap-4">
-              <img
-                src="/offroad-zamal-logo.svg"
-                alt="Off Road Izamal"
-                className="h-16 w-16 rounded-2xl border border-brand-yellow/30 bg-white/5 p-2"
-              />
-              <div>
-                <p className="font-display text-5xl uppercase text-brand-yellow">OffRoad Izamal</p>
-                <p className="text-sm uppercase tracking-[0.35em] text-zinc-500">ATV Agency</p>
-              </div>
+        <div className="flex flex-col justify-center border-b border-white/10 p-8 lg:border-b-0 lg:border-r">
+          <div className="flex items-center gap-4">
+            <img
+              src="/logo.jpg"
+              alt="Off Road Izamal"
+              className="h-24 w-24 rounded-3xl border border-brand-yellow/30 bg-white/5 object-cover"
+            />
+            <div>
+              <p className="font-display text-6xl uppercase text-brand-yellow">OffRoad Izamal</p>
+              <p className="text-sm uppercase tracking-[0.35em] text-zinc-500">
+                Sistema de reservaciones
+              </p>
             </div>
-
-            <h1 className="max-w-lg font-display text-6xl uppercase leading-none text-white">
-              Control brutal para aventuras reales.
-            </h1>
-            <p className="mt-4 max-w-lg text-zinc-300">
-              Administra reservas, pagos y operaciones diarias desde un panel con caracter
-              extremo, inspirado en rutas, tierra y velocidad.
-            </p>
           </div>
 
-          <div className="mt-10 grid gap-4 md:grid-cols-2">
-            <div className="rounded-3xl border border-white/10 bg-white/5 p-5">
-              <Mountain className="mb-3 h-6 w-6 text-brand-yellow" />
-              <p className="font-display text-3xl uppercase text-white">Dashboard de ruta</p>
-              <p className="text-sm text-zinc-400">Tours del dia, ingresos y pendientes al instante.</p>
-            </div>
-            <div className="rounded-3xl border border-white/10 bg-white/5 p-5">
-              <LockKeyhole className="mb-3 h-6 w-6 text-brand-yellow" />
-              <p className="font-display text-3xl uppercase text-white">Acceso blindado</p>
-              <p className="text-sm text-zinc-400">JWT, bcrypt y roles admin / empleado.</p>
-            </div>
+          <div className="mt-8 rounded-3xl border border-white/10 bg-white/5 p-6">
+            <p className="font-display text-4xl uppercase text-white">Acceso del personal</p>
+            <p className="mt-2 text-sm text-zinc-400">
+              Ingresa con tu usuario y contraseña para administrar agenda, pagos y salidas.
+            </p>
           </div>
         </div>
 
         <div className="p-8">
-          <p className="font-display text-5xl uppercase text-brand-yellow">Iniciar Sesion</p>
+          <p className="font-display text-5xl uppercase text-brand-yellow">Iniciar sesión</p>
           <p className="mb-6 mt-2 text-zinc-400">Acceso privado para el equipo operativo.</p>
 
           <form className="space-y-4" onSubmit={handleSubmit}>
@@ -143,7 +129,7 @@ const LoginPage = () => {
               disabled={loading}
               className="h-14 w-full rounded-2xl bg-brand-yellow font-display text-3xl uppercase tracking-wider text-black transition hover:-translate-y-0.5 hover:bg-yellow-300 hover:shadow-glow disabled:opacity-60"
             >
-              {loading ? "Entrando..." : "Entrar al Panel"}
+              {loading ? "Entrando..." : "Entrar al panel"}
             </button>
           </form>
         </div>
