@@ -128,8 +128,19 @@ const DashboardPage = () => {
     }
   };
 
+  const getExportParams = () => ({
+    search: filters.search || undefined,
+    fecha: filters.fecha || undefined,
+    status: filters.status || undefined,
+    sortBy: filters.sortBy,
+    order: filters.order
+  });
+
   const downloadFile = async (path, filename) => {
-    const response = await api.get(path, { responseType: "blob" });
+    const response = await api.get(path, {
+      params: getExportParams(),
+      responseType: "blob"
+    });
     const url = window.URL.createObjectURL(new Blob([response.data]));
     const link = document.createElement("a");
     link.href = url;
