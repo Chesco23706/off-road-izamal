@@ -8,20 +8,37 @@ const getToday = () =>
 export const getDashboardSummary = async (_req, res, next) => {
   try {
     const today = getToday();
-    const tours = await Tour.find();
-    const toursDelDia = tours.filter((tour) => tour.fecha === today);
-    const totalGanado = tours.reduce((acc, tour) => acc + tour.abono, 0);
-    const pendientes = tours.filter((tour) => tour.status === "Pendiente").length;
-    const pagados = tours.filter((tour) => tour.status === "Pagado").length;
+    const [totals, toursDelDia, proximosTours] = await Promise.all([
+      Tour.aggregate([
+        {
+          $group: {
+            _id: null,
+            totalGanado: { $sum: "$abono" },
+            pendientes: {
+              $sum: { $cond: [{ $eq: ["$status", "Pendiente"] }, 1, 0] },
+            },
+            pagados: {
+              $sum: { $cond: [{ $eq: ["$status", "Pagado"] }, 1, 0] },
+            },
+          },
+        },
+      ]),
+      Tour.countDocuments({ fecha: today }),
+      Tour.find().sort({ fecha: 1, hora: 1 }).limit(5).lean(),
+    ]);
+
+    const summary = totals[0] || {
+      totalGanado: 0,
+      pendientes: 0,
+      pagados: 0,
+    };
 
     res.json({
-      totalGanado,
-      toursDelDia: toursDelDia.length,
-      pendientes,
-      pagados,
-      proximosTours: tours
-        .sort((a, b) => `${a.fecha} ${a.hora}`.localeCompare(`${b.fecha} ${b.hora}`))
-        .slice(0, 5),
+      totalGanado: summary.totalGanado,
+      toursDelDia,
+      pendientes: summary.pendientes,
+      pagados: summary.pagados,
+      proximosTours,
     });
   } catch (error) {
     next(error);

@@ -6,9 +6,18 @@ const AuthContext = createContext(null);
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(() => {
     const storedUser = localStorage.getItem("offroad-user");
-    return storedUser ? JSON.parse(storedUser) : null;
+    try {
+      return storedUser ? JSON.parse(storedUser) : null;
+    } catch {
+      localStorage.removeItem("offroad-user");
+      return null;
+    }
   });
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(() => {
+    const token = localStorage.getItem("offroad-token");
+    const storedUser = localStorage.getItem("offroad-user");
+    return Boolean(token && !storedUser);
+  });
 
   useEffect(() => {
     const token = localStorage.getItem("offroad-token");
@@ -16,6 +25,10 @@ export const AuthProvider = ({ children }) => {
     if (!token) {
       setLoading(false);
       return;
+    }
+
+    if (user) {
+      setLoading(false);
     }
 
     api

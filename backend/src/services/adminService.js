@@ -13,22 +13,25 @@ export const ensureAdminUser = async () => {
     return;
   }
 
-  const hashedPassword = await bcrypt.hash(password, 10);
   const existingUser = await User.findOne({ usuario });
 
   if (existingUser) {
-    existingUser.password = hashedPassword;
-    existingUser.contraseña = undefined;
-    existingUser[legacyMojibakePasswordKey] = undefined;
-    existingUser.rol = rol;
-    await existingUser.save();
-    console.log(`Admin user ${usuario} updated`);
+    if (process.env.ADMIN_SYNC === "true") {
+      existingUser.password = await bcrypt.hash(password, 10);
+      existingUser[legacyMojibakePasswordKey] = undefined;
+      existingUser.rol = rol;
+      await existingUser.save();
+      console.log(`Admin user ${usuario} updated`);
+      return;
+    }
+
+    console.log(`Admin user ${usuario} already exists`);
     return;
   }
 
   await User.create({
     usuario,
-    password: hashedPassword,
+    password: await bcrypt.hash(password, 10),
     rol,
   });
 

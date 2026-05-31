@@ -13,7 +13,7 @@ export const protect = async (req, _res, next) => {
 
     const token = authHeader.split(" ")[1];
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const user = await User.findById(decoded.id).select("-contraseña");
+    const user = await User.findById(decoded.id).select("_id usuario rol").lean();
 
     if (!user) {
       const error = new Error("Usuario no encontrado");

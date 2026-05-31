@@ -41,7 +41,7 @@ const buildFilters = ({ search, fecha, status, sortBy = "fecha", order = "asc" }
 export const getTours = async (req, res, next) => {
   try {
     const { query, sort } = buildFilters(req.query);
-    const tours = await Tour.find(query).sort(sort);
+    const tours = await Tour.find(query).sort(sort).lean();
 
     res.json(tours);
   } catch (error) {
@@ -58,7 +58,7 @@ const getAtvUsageForWindow = async ({ fecha, hora, excludeTourId }) => {
     query._id = { $ne: excludeTourId };
   }
 
-  const tours = await Tour.find(query).lean();
+  const tours = await Tour.find(query).select("hora cantidadAtvs").lean();
 
   return tours.reduce((total, tour) => {
     const tourStart = timeToMinutes(tour.hora);

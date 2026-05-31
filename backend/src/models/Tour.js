@@ -65,6 +65,9 @@ const tourSchema = new mongoose.Schema(
 );
 
 tourSchema.index({ fecha: 1, hora: 1 });
+tourSchema.index({ status: 1 });
+tourSchema.index({ fecha: 1, status: 1 });
+tourSchema.index({ createdAt: -1 });
 
 const Tour = mongoose.model("Tour", tourSchema);
 

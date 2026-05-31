@@ -7,21 +7,40 @@ const useTours = (filters) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  const fetchData = async () => {
+  const getParams = () => ({
+    search: filters.search || undefined,
+    fecha: filters.fecha || undefined,
+    status: filters.status || undefined,
+    sortBy: filters.sortBy,
+    order: filters.order
+  });
+
+  const fetchTours = async () => {
     try {
       setLoading(true);
       setError("");
 
-      const params = {
-        search: filters.search || undefined,
-        fecha: filters.fecha || undefined,
-        status: filters.status || undefined,
-        sortBy: filters.sortBy,
-        order: filters.order
-      };
+      const toursResponse = await api.get("/tours", { params: getParams() });
+      setTours(toursResponse.data);
+    } catch (requestError) {
+      setError(requestError.response?.data?.message || "No se pudo cargar la informacion");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchDashboard = async () => {
+    const dashboardResponse = await api.get("/dashboard/summary");
+    setDashboard(dashboardResponse.data);
+  };
+
+  const refresh = async () => {
+    try {
+      setLoading(true);
+      setError("");
 
       const [toursResponse, dashboardResponse] = await Promise.all([
-        api.get("/tours", { params }),
+        api.get("/tours", { params: getParams() }),
         api.get("/dashboard/summary")
       ]);
 
@@ -35,15 +54,21 @@ const useTours = (filters) => {
   };
 
   useEffect(() => {
-    fetchData();
+    fetchTours();
   }, [filters.search, filters.fecha, filters.status, filters.sortBy, filters.order]);
+
+  useEffect(() => {
+    fetchDashboard().catch((requestError) => {
+      setError(requestError.response?.data?.message || "No se pudo cargar el resumen");
+    });
+  }, []);
 
   return {
     tours,
     dashboard,
     loading,
     error,
-    refresh: fetchData
+    refresh
   };
 };
 
