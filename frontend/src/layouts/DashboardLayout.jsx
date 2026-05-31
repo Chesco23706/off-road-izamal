@@ -1,8 +1,16 @@
-import { LogOut, ShieldCheck } from "lucide-react";
+import { BarChart3, ClipboardList, Home, LogOut, ShieldCheck } from "lucide-react";
+import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
+
+const navItems = [
+  { to: "/", label: "Panel", icon: Home },
+  { to: "/tours", label: "Tours", icon: ClipboardList },
+  { to: "/ingresos", label: "Ingresos", icon: BarChart3 },
+];
 
 const DashboardLayout = ({ children }) => {
   const { user, logout } = useAuth();
+  const location = useLocation();
 
   return (
     <div className="min-h-screen bg-brand-black text-white">
@@ -26,7 +34,29 @@ const DashboardLayout = ({ children }) => {
               </div>
             </div>
 
-            <div className="flex items-center gap-3">
+            <div className="flex flex-1 flex-wrap items-center justify-end gap-3">
+              <div className="order-3 flex w-full flex-wrap gap-2 lg:order-none lg:w-auto">
+                {navItems.map((item) => {
+                  const Icon = item.icon;
+                  const active = location.pathname === item.to;
+
+                  return (
+                    <Link
+                      key={item.to}
+                      to={item.to}
+                      className={`inline-flex flex-1 items-center justify-center gap-2 rounded-xl border px-4 py-3 text-sm font-semibold uppercase tracking-wide transition lg:flex-none ${
+                        active
+                          ? "border-brand-yellow/40 bg-brand-yellow text-black shadow-glow"
+                          : "border-white/10 bg-white/5 text-white hover:border-brand-yellow/30 hover:text-brand-yellow"
+                      }`}
+                    >
+                      <Icon className="h-4 w-4" />
+                      {item.label}
+                    </Link>
+                  );
+                })}
+              </div>
+
               <div className="hidden rounded-2xl border border-brand-yellow/20 bg-white/5 px-4 py-2 text-right sm:block">
                 <p className="text-xs uppercase tracking-[0.25em] text-zinc-500">Usuario</p>
                 <p className="flex items-center justify-end gap-2 text-sm font-semibold text-white">

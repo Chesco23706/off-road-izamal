@@ -1,6 +1,5 @@
 import { useState } from "react";
-import { BarChart3, Bike, CalendarClock, Edit3, Map, Plus, ShieldCheck } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Bike, CalendarClock, Edit3, Map, Plus, ShieldCheck } from "lucide-react";
 import api from "../api/client";
 import TourFormModal from "../components/TourFormModal.jsx";
 import useTours from "../hooks/useTours.js";
@@ -27,7 +26,7 @@ const DashboardPage = () => {
   const [selectedTour, setSelectedTour] = useState(null);
   const [formLoading, setFormLoading] = useState(false);
   const [feedback, setFeedback] = useState({ type: "", message: "" });
-  const { tours, dashboard, loading, error, refresh } = useTours(defaultFilters);
+  const { tours, loading, error, refresh } = useTours(defaultFilters);
   const pendingUpcomingTours = tours
     .filter((tour) => tour.status === "Pendiente" && tour.fecha >= getToday())
     .sort(sortBySchedule)
@@ -104,23 +103,14 @@ const DashboardPage = () => {
                 </p>
               </div>
 
-              <div className="flex flex-col gap-3 sm:flex-row">
-                <Link
-                  to="/ingresos"
-                  className="inline-flex items-center justify-center gap-2 rounded-xl border border-brand-yellow/30 bg-white/5 px-5 py-4 font-semibold uppercase tracking-wider text-white transition hover:border-brand-yellow/60 hover:text-brand-yellow"
-                >
-                  <BarChart3 className="h-5 w-5" />
-                  Ver ingresos
-                </Link>
-                <button
-                  type="button"
-                  onClick={openCreateModal}
-                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-brand-yellow px-5 py-4 font-semibold uppercase tracking-wider text-black transition hover:-translate-y-0.5 hover:bg-yellow-300 hover:shadow-glow"
-                >
-                  <Plus className="h-5 w-5" />
-                  Nueva reservacion
-                </button>
-              </div>
+              <button
+                type="button"
+                onClick={openCreateModal}
+                className="inline-flex items-center justify-center gap-2 rounded-xl bg-brand-yellow px-5 py-4 font-semibold uppercase tracking-wider text-black transition hover:-translate-y-0.5 hover:bg-yellow-300 hover:shadow-glow"
+              >
+                <Plus className="h-5 w-5" />
+                Nueva reservacion
+              </button>
             </div>
 
             {(error || feedback.message) && (

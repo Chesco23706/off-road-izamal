@@ -3,6 +3,7 @@ import ProtectedRoute from "./components/ProtectedRoute.jsx";
 import DashboardPage from "./pages/DashboardPage.jsx";
 import IngresosPage from "./pages/IngresosPage.jsx";
 import LoginPage from "./pages/LoginPage.jsx";
+import RegistroToursPage from "./pages/RegistroToursPage.jsx";
 
 function App() {
   return (
@@ -21,6 +22,14 @@ function App() {
         element={
           <ProtectedRoute>
             <IngresosPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/tours"
+        element={
+          <ProtectedRoute>
+            <RegistroToursPage />
           </ProtectedRoute>
         }
       />
