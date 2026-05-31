@@ -1,15 +1,11 @@
 import { useState } from "react";
-import { Bike, CircleDollarSign, Mountain, Plus, Route } from "lucide-react";
+import { Bike, CalendarClock, Edit3, Map, Plus, ShieldCheck } from "lucide-react";
 import api from "../api/client";
-import FiltersBar from "../components/FiltersBar.jsx";
-import MonthlyEarningsSection from "../components/MonthlyEarningsSection.jsx";
-import StatsCard from "../components/StatsCard.jsx";
+import EarningsSidebar from "../components/EarningsSidebar.jsx";
 import TourFormModal from "../components/TourFormModal.jsx";
-import ToursTable from "../components/ToursTable.jsx";
-import { useAuth } from "../context/AuthContext.jsx";
 import useTours from "../hooks/useTours.js";
 import DashboardLayout from "../layouts/DashboardLayout.jsx";
-import { currency } from "../utils/formatters.js";
+import { currency, prettyTourType } from "../utils/formatters.js";
 
 const defaultFilters = {
   search: "",
@@ -19,50 +15,23 @@ const defaultFilters = {
   order: "asc"
 };
 
+const getToday = () =>
+  new Intl.DateTimeFormat("en-CA", {
+    timeZone: "America/Mexico_City",
+  }).format(new Date());
+
+const sortBySchedule = (a, b) => `${a.fecha} ${a.hora}`.localeCompare(`${b.fecha} ${b.hora}`);
+
 const DashboardPage = () => {
-  const { user } = useAuth();
-  const [filters, setFilters] = useState(defaultFilters);
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedTour, setSelectedTour] = useState(null);
   const [formLoading, setFormLoading] = useState(false);
   const [feedback, setFeedback] = useState({ type: "", message: "" });
-  const { tours, dashboard, loading, error, refresh } = useTours(filters);
-
-  const cards = [
-    {
-      label: "Total ganado",
-      value: currency(dashboard?.totalGanado || 0),
-      icon: CircleDollarSign,
-      accent: "text-brand-yellow"
-    },
-    {
-      label: "Tours del dia",
-      value: dashboard?.toursDelDia || 0,
-      icon: Bike,
-      accent: "text-white"
-    },
-    {
-      label: "Pendientes",
-      value: dashboard?.pendientes || 0,
-      icon: Route,
-      accent: "text-red-400"
-    },
-    {
-      label: "Pagados",
-      value: dashboard?.pagados || 0,
-      icon: Mountain,
-      accent: "text-green-400"
-    }
-  ];
-
-  const handleFilterChange = (field, value) => {
-    setFilters((current) => ({
-      ...current,
-      [field]: value
-    }));
-  };
-
-  const clearFilters = () => setFilters(defaultFilters);
+  const { tours, dashboard, loading, error, refresh } = useTours(defaultFilters);
+  const pendingUpcomingTours = tours
+    .filter((tour) => tour.status === "Pendiente" && tour.fecha >= getToday())
+    .sort(sortBySchedule)
+    .slice(0, 10);
 
   const openCreateModal = () => {
     setSelectedTour(null);
@@ -105,20 +74,6 @@ const DashboardPage = () => {
     }
   };
 
-  const deleteTour = async (tour) => {
-    const confirmed = window.confirm(`Eliminar la reservacion de ${tour.nombreCliente}?`);
-
-    if (!confirmed) return;
-
-    try {
-      await api.delete(`/tours/${tour._id}`);
-      showFeedback("success", "Reservacion eliminada.");
-      await refresh();
-    } catch (requestError) {
-      showFeedback("error", requestError.response?.data?.message || "No se pudo eliminar");
-    }
-  };
-
   const markAsPaid = async (tour) => {
     try {
       await api.patch(`/tours/${tour._id}/pay`);
@@ -129,65 +84,42 @@ const DashboardPage = () => {
     }
   };
 
-  const getExportParams = () => ({
-    search: filters.search || undefined,
-    fecha: filters.fecha || undefined,
-    status: filters.status || undefined,
-    sortBy: filters.sortBy,
-    order: filters.order
-  });
-
-  const downloadFile = async (path, filename) => {
-    const response = await api.get(path, {
-      params: getExportParams(),
-      responseType: "blob"
-    });
-    const url = window.URL.createObjectURL(new Blob([response.data]));
-    const link = document.createElement("a");
-    link.href = url;
-    link.setAttribute("download", filename);
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-    window.URL.revokeObjectURL(url);
-  };
-
-  const exportExcel = async () => {
-    try {
-      await downloadFile("/export/excel", "off-road-izamal-reservaciones.xlsx");
-    } catch {
-      showFeedback("error", "No se pudo exportar a Excel");
-    }
-  };
-
-  const exportPdf = async () => {
-    try {
-      await downloadFile("/export/pdf", "off-road-izamal-reservaciones.pdf");
-    } catch {
-      showFeedback("error", "No se pudo exportar a PDF");
-    }
-  };
-
   return (
     <DashboardLayout>
-      <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        {cards.map((card) => (
-          <StatsCard key={card.label} {...card} />
-        ))}
-      </section>
+      <div className="grid gap-6 lg:grid-cols-[360px_1fr]">
+        <EarningsSidebar dashboard={dashboard} />
 
-      <MonthlyEarningsSection />
+        <section className="min-w-0">
+          <div className="mb-5 rounded-2xl border border-white/10 bg-zinc-950/85 p-5 shadow-panel">
+            <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
+              <div>
+                <div className="mb-3 inline-flex items-center gap-2 rounded-xl border border-brand-yellow/25 bg-brand-yellow/10 px-3 py-2 text-brand-yellow">
+                  <CalendarClock className="h-4 w-4" />
+                  <span className="text-xs font-semibold uppercase tracking-[0.22em]">
+                    Menu principal
+                  </span>
+                </div>
+                <p className="font-display text-5xl uppercase leading-none text-white">
+                  Pendientes proximos
+                </p>
+                <p className="mt-2 max-w-2xl text-sm text-zinc-400">
+                  Lista enfocada en las reservaciones pendientes que vienen primero en la agenda.
+                </p>
+              </div>
 
-      <section className="mt-6">
-        <FiltersBar filters={filters} onChange={handleFilterChange} onClear={clearFilters} />
-      </section>
+              <button
+                type="button"
+                onClick={openCreateModal}
+                className="inline-flex items-center justify-center gap-2 rounded-xl bg-brand-yellow px-5 py-4 font-semibold uppercase tracking-wider text-black transition hover:-translate-y-0.5 hover:bg-yellow-300 hover:shadow-glow"
+              >
+                <Plus className="h-5 w-5" />
+                Nueva reservacion
+              </button>
+            </div>
 
-      <section className="mt-6">
-        <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div>
             {(error || feedback.message) && (
               <div
-                className={`rounded-2xl border px-4 py-3 text-sm ${
+                className={`mt-4 rounded-xl border px-4 py-3 text-sm ${
                   feedback.type === "error" || error
                     ? "border-red-500/20 bg-red-500/10 text-red-300"
                     : "border-green-500/20 bg-green-500/10 text-green-300"
@@ -198,32 +130,95 @@ const DashboardPage = () => {
             )}
           </div>
 
-          <button
-            type="button"
-            onClick={openCreateModal}
-            className="inline-flex items-center justify-center gap-2 rounded-2xl bg-brand-yellow px-5 py-4 font-semibold uppercase tracking-wider text-black transition hover:-translate-y-0.5 hover:bg-yellow-300 hover:shadow-glow"
-          >
-            <Plus className="h-5 w-5" />
-            Nueva reservacion
-          </button>
-        </div>
+          {loading ? (
+            <div className="rounded-2xl border border-white/10 bg-zinc-950/80 p-12 text-center font-display text-4xl uppercase tracking-wide text-brand-yellow shadow-panel">
+              Cargando pendientes...
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {pendingUpcomingTours.length === 0 ? (
+                <div className="rounded-2xl border border-white/10 bg-zinc-950/80 p-10 text-center shadow-panel">
+                  <Bike className="mx-auto mb-4 h-10 w-10 text-brand-yellow" />
+                  <p className="font-display text-4xl uppercase text-white">Sin pendientes proximos</p>
+                  <p className="mt-2 text-sm text-zinc-400">
+                    No hay reservaciones pendientes a partir de hoy.
+                  </p>
+                </div>
+              ) : (
+                pendingUpcomingTours.map((tour) => (
+                  <article
+                    key={tour._id}
+                    className="rounded-2xl border border-white/10 bg-zinc-950/80 p-5 shadow-panel"
+                  >
+                    <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
+                      <div className="min-w-0">
+                        <div className="mb-3 flex flex-wrap items-center gap-2">
+                          <span className="inline-flex items-center gap-2 rounded-xl border border-red-500/20 bg-red-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-red-300">
+                            Pendiente
+                          </span>
+                          <span className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-zinc-300">
+                            <Map className="h-3.5 w-3.5 text-brand-yellow" />
+                            {prettyTourType(tour.tipoTour)}
+                          </span>
+                        </div>
 
-        {loading ? (
-          <div className="rounded-[30px] border border-white/10 bg-zinc-950/80 p-12 text-center font-display text-4xl uppercase tracking-wide text-brand-yellow shadow-panel">
-            Cargando agenda...
-          </div>
-        ) : (
-          <ToursTable
-            tours={tours}
-            onEdit={openEditModal}
-            onDelete={deleteTour}
-            onMarkPaid={markAsPaid}
-            canDelete={user?.rol === "admin"}
-            onExportExcel={exportExcel}
-            onExportPdf={exportPdf}
-          />
-        )}
-      </section>
+                        <p className="truncate font-display text-4xl uppercase leading-none text-white">
+                          {tour.nombreCliente}
+                        </p>
+                        <div className="mt-3 grid gap-3 text-sm text-zinc-400 sm:grid-cols-4">
+                          <p>
+                            <span className="block text-xs uppercase tracking-[0.2em] text-zinc-600">
+                              Fecha
+                            </span>
+                            {tour.fecha}
+                          </p>
+                          <p>
+                            <span className="block text-xs uppercase tracking-[0.2em] text-zinc-600">
+                              Hora
+                            </span>
+                            {tour.hora}
+                          </p>
+                          <p>
+                            <span className="block text-xs uppercase tracking-[0.2em] text-zinc-600">
+                              ATVs
+                            </span>
+                            {tour.cantidadAtvs}
+                          </p>
+                          <p>
+                            <span className="block text-xs uppercase tracking-[0.2em] text-zinc-600">
+                              Saldo
+                            </span>
+                            {currency(tour.restante)}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="flex shrink-0 flex-wrap gap-2">
+                        <button
+                          type="button"
+                          onClick={() => openEditModal(tour)}
+                          className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-semibold uppercase tracking-wide text-zinc-200 transition hover:border-brand-yellow/30 hover:text-brand-yellow"
+                        >
+                          <Edit3 className="h-4 w-4" />
+                          Editar
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => markAsPaid(tour)}
+                          className="inline-flex items-center gap-2 rounded-xl border border-green-500/20 bg-green-500/10 px-4 py-3 text-sm font-semibold uppercase tracking-wide text-green-300 transition hover:-translate-y-0.5"
+                        >
+                          <ShieldCheck className="h-4 w-4" />
+                          Pagado
+                        </button>
+                      </div>
+                    </div>
+                  </article>
+                ))
+              )}
+            </div>
+          )}
+        </section>
+      </div>
 
       <TourFormModal
         open={modalOpen}
