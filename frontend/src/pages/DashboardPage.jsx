@@ -1,7 +1,7 @@
 import { useState } from "react";
-import { Bike, CalendarClock, Edit3, Map, Plus, ShieldCheck } from "lucide-react";
+import { BarChart3, Bike, CalendarClock, Edit3, Map, Plus, ShieldCheck } from "lucide-react";
+import { Link } from "react-router-dom";
 import api from "../api/client";
-import EarningsSidebar from "../components/EarningsSidebar.jsx";
 import TourFormModal from "../components/TourFormModal.jsx";
 import useTours from "../hooks/useTours.js";
 import DashboardLayout from "../layouts/DashboardLayout.jsx";
@@ -86,10 +86,7 @@ const DashboardPage = () => {
 
   return (
     <DashboardLayout>
-      <div className="grid gap-6 lg:grid-cols-[360px_1fr]">
-        <EarningsSidebar dashboard={dashboard} />
-
-        <section className="min-w-0">
+      <section className="min-w-0">
           <div className="mb-5 rounded-2xl border border-white/10 bg-zinc-950/85 p-5 shadow-panel">
             <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
               <div>
@@ -107,14 +104,23 @@ const DashboardPage = () => {
                 </p>
               </div>
 
-              <button
-                type="button"
-                onClick={openCreateModal}
-                className="inline-flex items-center justify-center gap-2 rounded-xl bg-brand-yellow px-5 py-4 font-semibold uppercase tracking-wider text-black transition hover:-translate-y-0.5 hover:bg-yellow-300 hover:shadow-glow"
-              >
-                <Plus className="h-5 w-5" />
-                Nueva reservacion
-              </button>
+              <div className="flex flex-col gap-3 sm:flex-row">
+                <Link
+                  to="/ingresos"
+                  className="inline-flex items-center justify-center gap-2 rounded-xl border border-brand-yellow/30 bg-white/5 px-5 py-4 font-semibold uppercase tracking-wider text-white transition hover:border-brand-yellow/60 hover:text-brand-yellow"
+                >
+                  <BarChart3 className="h-5 w-5" />
+                  Ver ingresos
+                </Link>
+                <button
+                  type="button"
+                  onClick={openCreateModal}
+                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-brand-yellow px-5 py-4 font-semibold uppercase tracking-wider text-black transition hover:-translate-y-0.5 hover:bg-yellow-300 hover:shadow-glow"
+                >
+                  <Plus className="h-5 w-5" />
+                  Nueva reservacion
+                </button>
+              </div>
             </div>
 
             {(error || feedback.message) && (
@@ -217,8 +223,7 @@ const DashboardPage = () => {
               )}
             </div>
           )}
-        </section>
-      </div>
+      </section>
 
       <TourFormModal
         open={modalOpen}
