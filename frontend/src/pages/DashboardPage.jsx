@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Bike, CircleDollarSign, Mountain, Plus, Route } from "lucide-react";
 import api from "../api/client";
 import FiltersBar from "../components/FiltersBar.jsx";
+import MonthlyEarningsSection from "../components/MonthlyEarningsSection.jsx";
 import StatsCard from "../components/StatsCard.jsx";
 import TourFormModal from "../components/TourFormModal.jsx";
 import ToursTable from "../components/ToursTable.jsx";
@@ -174,6 +175,8 @@ const DashboardPage = () => {
           <StatsCard key={card.label} {...card} />
         ))}
       </section>
+
+      <MonthlyEarningsSection />
 
       <section className="mt-6">
         <FiltersBar filters={filters} onChange={handleFilterChange} onClear={clearFilters} />
