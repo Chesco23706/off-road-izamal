@@ -8,6 +8,11 @@ import {
   validateTourPayload
 } from "../utils/tourUtils.js";
 
+const getToday = () =>
+  new Intl.DateTimeFormat("en-CA", {
+    timeZone: process.env.APP_TIMEZONE || "America/Mexico_City"
+  }).format(new Date());
+
 const buildFilters = ({ search, fecha, status, sortBy = "fecha", order = "asc" }) => {
   const query = {};
 
@@ -41,7 +46,14 @@ const buildFilters = ({ search, fecha, status, sortBy = "fecha", order = "asc" }
 export const getTours = async (req, res, next) => {
   try {
     const { query, sort } = buildFilters(req.query);
-    const tours = await Tour.find(query).sort(sort).lean();
+    let select;
+
+    if (req.user?.rol === "agenda") {
+      query.fecha = { $gte: getToday() };
+      select = "nombreCliente fecha hora cantidadAtvs tipoTour extra status";
+    }
+
+    const tours = await Tour.find(query).select(select).sort(sort).lean();
 
     res.json(tours);
   } catch (error) {

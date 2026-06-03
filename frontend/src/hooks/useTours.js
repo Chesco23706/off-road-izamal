@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import api from "../api/client";
 
-const useTours = (filters) => {
+const useTours = (filters, options = {}) => {
+  const { includeDashboard = false } = options;
   const [tours, setTours] = useState([]);
   const [dashboard, setDashboard] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -41,7 +42,7 @@ const useTours = (filters) => {
 
       const [toursResponse, dashboardResponse] = await Promise.all([
         api.get("/tours", { params: getParams() }),
-        api.get("/dashboard/summary")
+        includeDashboard ? api.get("/dashboard/summary") : Promise.resolve({ data: dashboard })
       ]);
 
       setTours(toursResponse.data);
@@ -58,10 +59,12 @@ const useTours = (filters) => {
   }, [filters.search, filters.fecha, filters.status, filters.sortBy, filters.order]);
 
   useEffect(() => {
+    if (!includeDashboard) return;
+
     fetchDashboard().catch((requestError) => {
       setError(requestError.response?.data?.message || "No se pudo cargar el resumen");
     });
-  }, []);
+  }, [includeDashboard]);
 
   return {
     tours,

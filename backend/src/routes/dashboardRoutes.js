@@ -3,12 +3,12 @@ import {
   getDashboardSummary,
   getMonthlyEarnings,
 } from "../controllers/dashboardController.js";
-import { protect } from "../middleware/authMiddleware.js";
+import { authorize, protect } from "../middleware/authMiddleware.js";
 
 const router = Router();
 
 router.use(protect);
-router.get("/summary", getDashboardSummary);
-router.get("/monthly-earnings", getMonthlyEarnings);
+router.get("/summary", authorize("admin", "empleado"), getDashboardSummary);
+router.get("/monthly-earnings", authorize("admin", "empleado"), getMonthlyEarnings);
 
 export default router;

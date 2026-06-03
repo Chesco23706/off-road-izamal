@@ -20,7 +20,7 @@ function App() {
       <Route
         path="/ingresos"
         element={
-          <ProtectedRoute>
+          <ProtectedRoute allowedRoles={["admin", "empleado"]}>
             <IngresosPage />
           </ProtectedRoute>
         }
@@ -28,7 +28,7 @@ function App() {
       <Route
         path="/tours"
         element={
-          <ProtectedRoute>
+          <ProtectedRoute allowedRoles={["admin", "empleado"]}>
             <RegistroToursPage />
           </ProtectedRoute>
         }

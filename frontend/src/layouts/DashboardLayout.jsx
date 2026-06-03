@@ -3,9 +3,9 @@ import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
 
 const navItems = [
-  { to: "/", label: "Panel", icon: Home },
-  { to: "/tours", label: "Tours", icon: ClipboardList },
-  { to: "/ingresos", label: "Ingresos", icon: BarChart3 },
+  { to: "/", label: "Panel", icon: Home, roles: ["admin", "empleado", "agenda"] },
+  { to: "/tours", label: "Tours", icon: ClipboardList, roles: ["admin", "empleado"] },
+  { to: "/ingresos", label: "Ingresos", icon: BarChart3, roles: ["admin", "empleado"] },
 ];
 
 const DashboardLayout = ({ children }) => {
@@ -36,7 +36,7 @@ const DashboardLayout = ({ children }) => {
 
             <div className="flex flex-1 flex-wrap items-center justify-end gap-3">
               <div className="order-3 flex w-full flex-wrap gap-2 lg:order-none lg:w-auto">
-                {navItems.map((item) => {
+                {navItems.filter((item) => item.roles.includes(user?.rol)).map((item) => {
                   const Icon = item.icon;
                   const active = location.pathname === item.to;
 
