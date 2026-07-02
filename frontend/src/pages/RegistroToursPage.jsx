@@ -14,6 +14,7 @@ const defaultFilters = {
   status: "",
   sortBy: "fecha",
   order: "asc",
+  compact: "true",
 };
 
 const RegistroToursPage = () => {

@@ -13,7 +13,16 @@ const getToday = () =>
     timeZone: process.env.APP_TIMEZONE || "America/Mexico_City"
   }).format(new Date());
 
-const buildFilters = ({ search, fecha, status, sortBy = "fecha", order = "asc" }) => {
+const buildFilters = ({
+  search,
+  fecha,
+  fromDate,
+  status,
+  sortBy = "fecha",
+  order = "asc",
+  limit,
+  compact,
+}) => {
   const query = {};
 
   if (search) {
@@ -22,6 +31,8 @@ const buildFilters = ({ search, fecha, status, sortBy = "fecha", order = "asc" }
 
   if (fecha) {
     query.fecha = fecha;
+  } else if (fromDate) {
+    query.fecha = { $gte: fromDate };
   }
 
   if (status) {
@@ -39,21 +50,34 @@ const buildFilters = ({ search, fecha, status, sortBy = "fecha", order = "asc" }
   ];
   const field = allowedSorts.includes(sortBy) ? sortBy : "fecha";
   const direction = order === "desc" ? -1 : 1;
+  const parsedLimit = Number(limit);
+  const safeLimit = Number.isFinite(parsedLimit)
+    ? Math.min(Math.max(parsedLimit, 1), 500)
+    : null;
+  const select = compact === "true" || compact === "1"
+    ? "nombreCliente fecha hora cantidadAtvs tipoTour extra abono total restante status"
+    : undefined;
 
-  return { query, sort: { [field]: direction, hora: 1 } };
+  return { query, sort: { [field]: direction, hora: 1 }, limit: safeLimit, select };
 };
 
 export const getTours = async (req, res, next) => {
   try {
-    const { query, sort } = buildFilters(req.query);
-    let select;
+    const { query, sort, limit, select: compactSelect } = buildFilters(req.query);
+    let select = compactSelect;
 
     if (req.user?.rol === "agenda") {
       query.fecha = { $gte: getToday() };
       select = "nombreCliente fecha hora cantidadAtvs tipoTour extra status";
     }
 
-    const tours = await Tour.find(query).select(select).sort(sort).lean();
+    const request = Tour.find(query).select(select).sort(sort).lean();
+
+    if (limit) {
+      request.limit(limit);
+    }
+
+    const tours = await request;
 
     res.json(tours);
   } catch (error) {

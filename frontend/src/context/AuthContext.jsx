@@ -29,6 +29,7 @@ export const AuthProvider = ({ children }) => {
 
     if (user) {
       setLoading(false);
+      return;
     }
 
     api

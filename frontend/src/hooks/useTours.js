@@ -11,9 +11,12 @@ const useTours = (filters, options = {}) => {
   const getParams = () => ({
     search: filters.search || undefined,
     fecha: filters.fecha || undefined,
+    fromDate: filters.fromDate || undefined,
     status: filters.status || undefined,
     sortBy: filters.sortBy,
-    order: filters.order
+    order: filters.order,
+    limit: filters.limit || undefined,
+    compact: filters.compact || undefined,
   });
 
   const fetchTours = async () => {
@@ -56,7 +59,16 @@ const useTours = (filters, options = {}) => {
 
   useEffect(() => {
     fetchTours();
-  }, [filters.search, filters.fecha, filters.status, filters.sortBy, filters.order]);
+  }, [
+    filters.search,
+    filters.fecha,
+    filters.fromDate,
+    filters.status,
+    filters.sortBy,
+    filters.order,
+    filters.limit,
+    filters.compact,
+  ]);
 
   useEffect(() => {
     if (!includeDashboard) return;

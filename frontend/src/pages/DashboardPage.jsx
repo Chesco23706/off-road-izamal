@@ -12,7 +12,9 @@ const defaultFilters = {
   fecha: "",
   status: "",
   sortBy: "fecha",
-  order: "asc"
+  order: "asc",
+  compact: "true",
+  limit: 10,
 };
 
 const getToday = () =>
@@ -29,9 +31,14 @@ const DashboardPage = () => {
   const [selectedTour, setSelectedTour] = useState(null);
   const [formLoading, setFormLoading] = useState(false);
   const [feedback, setFeedback] = useState({ type: "", message: "" });
-  const { tours, loading, error, refresh } = useTours(defaultFilters);
+  const today = getToday();
+  const tourFilters = {
+    ...defaultFilters,
+    fromDate: today,
+    status: canManageTours ? "Pendiente" : "",
+  };
+  const { tours, loading, error, refresh } = useTours(tourFilters);
   const upcomingTours = tours
-    .filter((tour) => tour.fecha >= getToday() && (!canManageTours || tour.status === "Pendiente"))
     .sort(sortBySchedule)
     .slice(0, 10);
 
