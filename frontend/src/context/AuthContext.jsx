@@ -3,26 +3,54 @@ import api from "../api/client";
 
 const AuthContext = createContext(null);
 
+const isTokenExpired = (token) => {
+  try {
+    const payload = JSON.parse(atob(token.split(".")[1]));
+    return payload.exp ? payload.exp * 1000 <= Date.now() : false;
+  } catch {
+    return true;
+  }
+};
+
+const clearStoredSession = () => {
+  localStorage.removeItem("offroad-token");
+  localStorage.removeItem("offroad-user");
+};
+
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(() => {
+    const token = localStorage.getItem("offroad-token");
+
+    if (token && isTokenExpired(token)) {
+      clearStoredSession();
+      return null;
+    }
+
     const storedUser = localStorage.getItem("offroad-user");
     try {
       return storedUser ? JSON.parse(storedUser) : null;
     } catch {
-      localStorage.removeItem("offroad-user");
+      clearStoredSession();
       return null;
     }
   });
   const [loading, setLoading] = useState(() => {
     const token = localStorage.getItem("offroad-token");
     const storedUser = localStorage.getItem("offroad-user");
-    return Boolean(token && !storedUser);
+    return Boolean(token && !storedUser && !isTokenExpired(token));
   });
 
   useEffect(() => {
     const token = localStorage.getItem("offroad-token");
 
     if (!token) {
+      setLoading(false);
+      return;
+    }
+
+    if (isTokenExpired(token)) {
+      clearStoredSession();
+      setUser(null);
       setLoading(false);
       return;
     }
@@ -39,8 +67,7 @@ export const AuthProvider = ({ children }) => {
         localStorage.setItem("offroad-user", JSON.stringify(data.user));
       })
       .catch(() => {
-        localStorage.removeItem("offroad-token");
-        localStorage.removeItem("offroad-user");
+        clearStoredSession();
         setUser(null);
       })
       .finally(() => setLoading(false));
@@ -54,8 +81,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   const logout = () => {
-    localStorage.removeItem("offroad-token");
-    localStorage.removeItem("offroad-user");
+    clearStoredSession();
     setUser(null);
   };
 

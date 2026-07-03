@@ -26,6 +26,10 @@ export const protect = async (req, _res, next) => {
     };
     next();
   } catch (error) {
+    if (error.name === "TokenExpiredError") {
+      error.message = "Sesion expirada. Inicia sesion nuevamente.";
+    }
+
     error.statusCode = error.statusCode || 401;
     next(error);
   }
