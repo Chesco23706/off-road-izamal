@@ -1,39 +1,15 @@
-import bcrypt from "bcryptjs";
 import dotenv from "dotenv";
 import connectDatabase from "../config/db.js";
-import User from "../models/User.js";
+import { ensureDatabaseSchema } from "../db/schema.js";
+import { ensureAdminUser } from "../services/adminService.js";
 
 dotenv.config();
 
-const legacyMojibakePasswordKey = "contrase" + String.fromCharCode(195, 177) + "a";
-
 const createAdmin = async () => {
   await connectDatabase();
-
-  const usuario = process.env.ADMIN_USER || "admin";
-  const password = process.env.ADMIN_PASSWORD || "Admin123!";
-  const rol = process.env.ADMIN_ROLE || "admin";
-  const hashedPassword = await bcrypt.hash(password, 10);
-
-  const existingUser = await User.findOne({ usuario });
-
-  if (existingUser) {
-    existingUser.password = hashedPassword;
-    existingUser.contraseña = undefined;
-    existingUser[legacyMojibakePasswordKey] = undefined;
-    existingUser.rol = rol;
-    await existingUser.save();
-    console.log(`Usuario ${usuario} actualizado correctamente`);
-    process.exit(0);
-  }
-
-  await User.create({
-    usuario,
-    password: hashedPassword,
-    rol,
-  });
-
-  console.log(`Usuario ${usuario} creado correctamente`);
+  await ensureDatabaseSchema();
+  await ensureAdminUser();
+  console.log("Admin seed completed");
   process.exit(0);
 };
 

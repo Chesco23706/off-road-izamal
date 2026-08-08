@@ -1,5 +1,5 @@
 import bcrypt from "bcryptjs";
-import User from "../models/User.js";
+import { findUserByUsername } from "../repositories/userRepository.js";
 import generateToken from "../utils/token.js";
 
 const legacyMojibakePasswordKey = "contrase" + String.fromCharCode(195, 177) + "a";
@@ -19,7 +19,7 @@ export const login = async (req, res, next) => {
       throw error;
     }
 
-    const user = await User.findOne({ usuario });
+    const user = await findUserByUsername(usuario);
 
     if (!user) {
       const error = new Error("Credenciales invalidas");

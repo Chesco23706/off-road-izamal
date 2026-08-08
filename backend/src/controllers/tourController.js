@@ -1,4 +1,12 @@
-import Tour from "../models/Tour.js";
+import {
+  createTourRecord,
+  deleteTourRecord,
+  findTourById,
+  findTours,
+  findToursForAvailability,
+  markTourPaid,
+  updateTourRecord,
+} from "../repositories/tourRepository.js";
 import {
   ATV_CAPACITY,
   TOUR_BLOCK_HOURS,
@@ -13,71 +21,15 @@ const getToday = () =>
     timeZone: process.env.APP_TIMEZONE || "America/Mexico_City"
   }).format(new Date());
 
-const buildFilters = ({
-  search,
-  fecha,
-  fromDate,
-  status,
-  sortBy = "fecha",
-  order = "asc",
-  limit,
-  compact,
-}) => {
-  const query = {};
-
-  if (search) {
-    query.nombreCliente = { $regex: search, $options: "i" };
-  }
-
-  if (fecha) {
-    query.fecha = fecha;
-  } else if (fromDate) {
-    query.fecha = { $gte: fromDate };
-  }
-
-  if (status) {
-    query.status = status;
-  }
-
-  const allowedSorts = [
-    "fecha",
-    "hora",
-    "nombreCliente",
-    "cantidadAtvs",
-    "tipoTour",
-    "status",
-    "createdAt"
-  ];
-  const field = allowedSorts.includes(sortBy) ? sortBy : "fecha";
-  const direction = order === "desc" ? -1 : 1;
-  const parsedLimit = Number(limit);
-  const safeLimit = Number.isFinite(parsedLimit)
-    ? Math.min(Math.max(parsedLimit, 1), 500)
-    : null;
-  const select = compact === "true" || compact === "1"
-    ? "nombreCliente fecha hora cantidadAtvs tipoTour extra abono total restante status"
-    : undefined;
-
-  return { query, sort: { [field]: direction, hora: 1 }, limit: safeLimit, select };
-};
-
 export const getTours = async (req, res, next) => {
   try {
-    const { query, sort, limit, select: compactSelect } = buildFilters(req.query);
-    let select = compactSelect;
+    const filters = { ...req.query };
 
     if (req.user?.rol === "agenda") {
-      query.fecha = { $gte: getToday() };
-      select = "nombreCliente fecha hora cantidadAtvs tipoTour extra status";
+      filters.fromDate = getToday();
     }
 
-    const request = Tour.find(query).select(select).sort(sort).lean();
-
-    if (limit) {
-      request.limit(limit);
-    }
-
-    const tours = await request;
+    const tours = await findTours(filters);
 
     res.json(tours);
   } catch (error) {
@@ -88,13 +40,7 @@ export const getTours = async (req, res, next) => {
 const getAtvUsageForWindow = async ({ fecha, hora, excludeTourId }) => {
   const requestedStart = timeToMinutes(hora);
   const requestedEnd = requestedStart + TOUR_BLOCK_HOURS * 60;
-  const query = { fecha };
-
-  if (excludeTourId) {
-    query._id = { $ne: excludeTourId };
-  }
-
-  const tours = await Tour.find(query).select("hora cantidadAtvs").lean();
+  const tours = await findToursForAvailability({ fecha, excludeTourId });
 
   return tours.reduce((total, tour) => {
     const tourStart = timeToMinutes(tour.hora);
@@ -143,7 +89,7 @@ export const createTour = async (req, res, next) => {
       cantidadAtvs: req.body.cantidadAtvs,
     });
 
-    const tour = await Tour.create({
+    const tour = await createTourRecord({
       nombreCliente: req.body.nombreCliente.trim(),
       fecha: req.body.fecha,
       hora: req.body.hora,
@@ -156,7 +102,7 @@ export const createTour = async (req, res, next) => {
 
     res.status(201).json(tour);
   } catch (error) {
-    if (error?.code === 11000) {
+    if (error?.code === "23505") {
       error.message = "Ese horario ya esta reservado";
       error.statusCode = 409;
     }
@@ -184,22 +130,15 @@ export const updateTour = async (req, res, next) => {
       excludeTourId: req.params.id,
     });
 
-    const tour = await Tour.findByIdAndUpdate(
-      req.params.id,
-      {
-        nombreCliente: req.body.nombreCliente.trim(),
-        fecha: req.body.fecha,
-        hora: req.body.hora,
-        cantidadAtvs: Number(req.body.cantidadAtvs),
-        tipoTour: req.body.tipoTour,
-        extra: req.body.extra?.trim() || "",
-        ...finance,
-      },
-      {
-        new: true,
-        runValidators: true,
-      }
-    );
+    const tour = await updateTourRecord(req.params.id, {
+      nombreCliente: req.body.nombreCliente.trim(),
+      fecha: req.body.fecha,
+      hora: req.body.hora,
+      cantidadAtvs: Number(req.body.cantidadAtvs),
+      tipoTour: req.body.tipoTour,
+      extra: req.body.extra?.trim() || "",
+      ...finance,
+    });
 
     if (!tour) {
       const error = new Error("Reservacion no encontrada");
@@ -209,7 +148,7 @@ export const updateTour = async (req, res, next) => {
 
     res.json(tour);
   } catch (error) {
-    if (error?.code === 11000) {
+    if (error?.code === "23505") {
       error.message = "Ese horario ya esta reservado";
       error.statusCode = 409;
     }
@@ -247,7 +186,7 @@ export const getAvailability = async (req, res, next) => {
 
 export const deleteTour = async (req, res, next) => {
   try {
-    const tour = await Tour.findByIdAndDelete(req.params.id);
+    const tour = await deleteTourRecord(req.params.id);
 
     if (!tour) {
       const error = new Error("Reservacion no encontrada");
@@ -263,18 +202,15 @@ export const deleteTour = async (req, res, next) => {
 
 export const markAsPaid = async (req, res, next) => {
   try {
-    const tour = await Tour.findById(req.params.id);
+    const existingTour = await findTourById(req.params.id);
 
-    if (!tour) {
+    if (!existingTour) {
       const error = new Error("Reservacion no encontrada");
       error.statusCode = 404;
       throw error;
     }
 
-    tour.abono = tour.total;
-    tour.restante = 0;
-    tour.status = "Pagado";
-    await tour.save();
+    const tour = await markTourPaid(req.params.id);
 
     res.json(tour);
   } catch (error) {

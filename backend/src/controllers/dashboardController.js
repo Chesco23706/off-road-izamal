@@ -1,4 +1,7 @@
-import Tour from "../models/Tour.js";
+import {
+  getDashboardSummaryData,
+  getMonthlyEarningsData,
+} from "../repositories/tourRepository.js";
 
 const getToday = () =>
   new Intl.DateTimeFormat("en-CA", {
@@ -8,38 +11,9 @@ const getToday = () =>
 export const getDashboardSummary = async (_req, res, next) => {
   try {
     const today = getToday();
-    const [totals, toursDelDia, proximosTours] = await Promise.all([
-      Tour.aggregate([
-        {
-          $group: {
-            _id: null,
-            totalGanado: { $sum: "$abono" },
-            pendientes: {
-              $sum: { $cond: [{ $eq: ["$status", "Pendiente"] }, 1, 0] },
-            },
-            pagados: {
-              $sum: { $cond: [{ $eq: ["$status", "Pagado"] }, 1, 0] },
-            },
-          },
-        },
-      ]),
-      Tour.countDocuments({ fecha: today }),
-      Tour.find().sort({ fecha: 1, hora: 1 }).limit(5).lean(),
-    ]);
+    const summary = await getDashboardSummaryData(today);
 
-    const summary = totals[0] || {
-      totalGanado: 0,
-      pendientes: 0,
-      pagados: 0,
-    };
-
-    res.json({
-      totalGanado: summary.totalGanado,
-      toursDelDia,
-      pendientes: summary.pendientes,
-      pagados: summary.pagados,
-      proximosTours,
-    });
+    res.json(summary);
   } catch (error) {
     next(error);
   }
@@ -66,90 +40,11 @@ export const getMonthlyEarnings = async (req, res, next) => {
   try {
     const month = req.query.month || getToday().slice(0, 7);
     const { start, end, daysInMonth } = getMonthRange(month);
-    const match = { fecha: { $gte: start, $lt: end } };
-
-    const [summary, daily, byType, byStatus] = await Promise.all([
-      Tour.aggregate([
-        { $match: match },
-        {
-          $group: {
-            _id: null,
-            totalGanado: { $sum: "$abono" },
-            totalFacturado: { $sum: "$total" },
-            totalPendiente: { $sum: "$restante" },
-            tours: { $sum: 1 },
-            atvs: { $sum: "$cantidadAtvs" },
-          },
-        },
-      ]),
-      Tour.aggregate([
-        { $match: match },
-        {
-          $group: {
-            _id: "$fecha",
-            totalGanado: { $sum: "$abono" },
-            tours: { $sum: 1 },
-          },
-        },
-        { $sort: { _id: 1 } },
-      ]),
-      Tour.aggregate([
-        { $match: match },
-        {
-          $group: {
-            _id: "$tipoTour",
-            totalGanado: { $sum: "$abono" },
-            tours: { $sum: 1 },
-          },
-        },
-        { $sort: { totalGanado: -1 } },
-      ]),
-      Tour.aggregate([
-        { $match: match },
-        {
-          $group: {
-            _id: "$status",
-            totalGanado: { $sum: "$abono" },
-            tours: { $sum: 1 },
-          },
-        },
-      ]),
-    ]);
-
-    const dailyMap = new Map(daily.map((day) => [day._id, day]));
-    const dailySeries = Array.from({ length: daysInMonth }, (_, index) => {
-      const dayNumber = index + 1;
-      const date = `${month}-${String(dayNumber).padStart(2, "0")}`;
-      const item = dailyMap.get(date);
-
-      return {
-        date,
-        day: dayNumber,
-        totalGanado: item?.totalGanado || 0,
-        tours: item?.tours || 0,
-      };
-    });
+    const earnings = await getMonthlyEarningsData({ month, start, end, daysInMonth });
 
     res.json({
       month,
-      summary: summary[0] || {
-        totalGanado: 0,
-        totalFacturado: 0,
-        totalPendiente: 0,
-        tours: 0,
-        atvs: 0,
-      },
-      daily: dailySeries,
-      byType: byType.map((item) => ({
-        tipoTour: item._id,
-        totalGanado: item.totalGanado,
-        tours: item.tours,
-      })),
-      byStatus: byStatus.map((item) => ({
-        status: item._id,
-        totalGanado: item.totalGanado,
-        tours: item.tours,
-      })),
+      ...earnings,
     });
   } catch (error) {
     next(error);

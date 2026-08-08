@@ -7,7 +7,8 @@
   "scripts": {
     "dev": "nodemon src/server.js",
     "start": "node src/server.js",
-    "seed:admin": "node src/seed/createAdmin.js"
+    "seed:admin": "node src/seed/createAdmin.js",
+    "migrate:mongo-to-supabase": "node src/scripts/migrateMongoToSupabase.js"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
@@ -19,7 +20,8 @@
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.6.1",
     "morgan": "^1.10.0",
-    "pdfkit": "^0.15.0"
+    "pdfkit": "^0.15.0",
+    "pg": "^8.13.1"
   },
   "devDependencies": {
     "nodemon": "^3.1.4"

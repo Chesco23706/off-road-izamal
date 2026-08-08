@@ -1,17 +1,19 @@
 import bcrypt from "bcryptjs";
-import User from "../models/User.js";
-
-const legacyMojibakePasswordKey = "contrase" + String.fromCharCode(195, 177) + "a";
+import {
+  createUser,
+  findUserByUsername,
+  updateUser,
+} from "../repositories/userRepository.js";
 
 const upsertUser = async ({ usuario, password, rol, sync, label }) => {
-  const existingUser = await User.findOne({ usuario });
+  const existingUser = await findUserByUsername(usuario);
 
   if (existingUser) {
     if (sync) {
-      existingUser.password = await bcrypt.hash(password, 10);
-      existingUser[legacyMojibakePasswordKey] = undefined;
-      existingUser.rol = rol;
-      await existingUser.save();
+      await updateUser(existingUser.id, {
+        password: await bcrypt.hash(password, 10),
+        rol,
+      });
       console.log(`${label} user ${usuario} updated`);
       return;
     }
@@ -20,7 +22,7 @@ const upsertUser = async ({ usuario, password, rol, sync, label }) => {
     return;
   }
 
-  await User.create({
+  await createUser({
     usuario,
     password: await bcrypt.hash(password, 10),
     rol,
