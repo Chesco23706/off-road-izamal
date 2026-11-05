@@ -103,7 +103,7 @@ const TourFormModal = ({ open, onClose, onSubmit, loading, initialValues }) => {
               {initialValues ? "Editar Reservacion" : "Nueva Reservacion"}
             </p>
             <p className="text-sm text-zinc-400">
-              Cada salida bloquea las cuatrimotos por 3 horas. Capacidad maxima: 10 ATVs.
+              Cada salida bloquea las cuatrimotos por 3 horas. Capacidad maxima: 13 ATVs.
             </p>
           </div>
           <button
@@ -140,7 +140,7 @@ const TourFormModal = ({ open, onClose, onSubmit, loading, initialValues }) => {
           <input
             type="number"
             min="1"
-            max="10"
+            max="13"
             step="1"
             placeholder="Cantidad de ATVs"
             value={form.cantidadAtvs}
